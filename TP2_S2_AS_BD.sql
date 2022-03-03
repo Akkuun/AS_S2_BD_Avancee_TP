@@ -114,8 +114,29 @@ select distinct  villeclient from clients where not exists(
 
         select * from campings where clients.villeclient=campings.villecamping )
 
-R46
+R46 ici on va chercher le dernier client qui a loué un bungalow qui s'apelle' la poubelle
 
+1) chercher tout les clients qui existent dans la table locations
+
+    on voit bien la jointure avec location et client qui fait bien le lien
+2) récuperer le dernier locataire de poubelle
+
+donc dans notre table contenant nos locations avec tous nos clients,
+    on va chercher ceux qui ont une dateFin au max avec comme bungalow poubelle
+
+
+select nomclient,prenomclient from clients where exists (
+                         select * from locations where locations.idclient=clients.idclient
+                                and
+                        datefin=(select max(datefin) from locations join bungalows on bungalows.idbungalow=locations.idbungalow
+                        where nombungalow='La Poubelle')
+
+R47) a corriger
+
+select distinct nomclient,prenomclient from clients where exists (
+        select * from locations where locations.idclient=clients.idclient  ) and exists (
+        select * from locations where datefin-datedebut>=10
+    )
 
 
 
