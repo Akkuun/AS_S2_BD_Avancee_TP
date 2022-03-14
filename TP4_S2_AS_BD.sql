@@ -74,3 +74,125 @@ order by nomclient
 
 R81
 
+R82 //condition dans la sous requete donc mettre cette condiation dans la requete de base
+
+//en premier on va chercher le bungalow du camping les flots bleus qui a la superficie la plus grande
+select nomservice from services
+    join proposer on services.idservice=proposer.idservice
+    join bungalows on bungalows.idbungalow = proposer.idbungalow
+    join campings on campings.idcamping=bungalows.idcamping
+    where nomcamping='Les Flots Bleus' and superficiebungalow =
+                                           (select max(superficiebungalow)   from bungalows
+                                               join campings on campings.idcamping=bungalows.idcamping
+                                                        where nomcamping='Les Flots Bleus')
+
+R83
+
+SELECT e.nomEmploye, e.prenomEmploye, COUNT(sub.idEmploye) AS "NB SUBORDONNES"
+FROM Employes e
+         JOIN Campings c ON e.idCamping = c.idCamping
+         LEFT OUTER JOIN Employes sub ON sub.idEmployeChef = e.idEmploye
+WHERE nomCamping = 'La Décharge Monochrome'
+GROUP BY e.idEmploye, e.nomEmploye, e.prenomEmploye;
+
+R84
+
+SELECT nomCamping
+FROM Campings c
+WHERE NOT EXISTS (SELECT *
+                  FROM Bungalows b
+                  WHERE superficieBungalow <= 50
+                    AND b.idCamping = c.idCamping);
+
+R85
+
+SELECT nomClient
+FROM Clients c
+         JOIN Locations l ON c.idClient = l.idClient
+GROUP BY c.idClient, nomClient
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM Locations l
+                            JOIN Clients c ON l.idClient = c.idClient
+                   WHERE nomClient = 'Zeblouse'
+                     AND prenomClient = 'Agathe');
+
+R86
+
+SELECT nomService
+FROM Services s
+         LEFT OUTER JOIN Proposer p ON p.idService = s.idService
+GROUP BY s.idService, nomService
+HAVING COUNT(idBungalow) < 5;
+
+R87
+SELECT nomCamping
+FROM Campings c
+         JOIN Employes e ON e.idCamping = c.idCamping
+GROUP BY c.idCamping, nomCamping
+HAVING COUNT(*) = (SELECT MAX(COUNT(*))
+                   FROM Employes
+                   GROUP BY idCamping);
+
+R88
+
+SELECT nomBungalow
+FROM Bungalows b
+         JOIN Proposer p ON b.idBungalow = p.idBungalow
+         JOIN Services s ON p.idService = s.idService
+GROUP BY b.idBungalow, nomBungalow
+HAVING COUNT(DISTINCT categorieService) = (SELECT COUNT(DISTINCT categorieService)
+                                           FROM Services);
+
+R89
+
+SELECT nomBungalow
+FROM Bungalows b1
+WHERE NOT EXISTS (SELECT idService
+                  FROM Bungalows b
+                           JOIN Proposer p ON b.idBungalow = p.idBungalow
+                  WHERE nomBungalow = 'La Suite Régalienne'
+                  MINUS
+                  SELECT idService
+                  FROM Proposer p
+                  WHERE p.idBungalow = b1.idBungalow)
+  AND NOT EXISTS (SELECT idService
+                  FROM Proposer p
+                  WHERE p.idBungalow = b1.idBungalow
+                  MINUS
+                  SELECT idService
+                  FROM Bungalows b
+                  JOIN Proposer p ON b.idBungalow = p.idBungalow
+                  WHERE nomBungalow = 'La Suite Régalienne');
+
+
+R90
+
+SELECT nomBungalow
+FROM Bungalows b
+WHERE NOT EXISTS (SELECT *
+                  FROM Locations l
+                  WHERE l.idBungalow = b.idBungalow)
+  AND superficieBungalow = (SELECT MIN(superficieBungalow)
+                            FROM Bungalows b
+                            WHERE NOT EXISTS (SELECT *
+                                              FROM Locations l
+                                              WHERE l.idBungalow = b.idBungalow));
+
+
+R91
+SELECT nomBungalow
+FROM Bungalows b1
+WHERE superficieBungalow > (SELECT AVG(superficieBungalow)
+                            FROM Bungalows b2
+                            WHERE b2.idCamping = b1.idCamping);
+
+R92
+
+SELECT nomCamping, nomEmploye, prenomEmploye
+FROM Campings c
+         JOIN Employes e ON c.idCamping = e.idCamping
+WHERE (salaireEmploye, c.idCamping) IN (SELECT MAX(salaireEmploye), idCamping
+                                        FROM Employes
+                                        GROUP BY idCamping);
+
+
