@@ -1,0 +1,257 @@
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Nimes
+		C3 	Bricot		Judas	Montpellier
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		C1
+		A4		110		C2
+		A5		1000		C2
+		A6		 600		C4
+
+JOINTURES
+
+Afficher le numéro et le nom des clients qui ont effectué des achats?
+Résultat attendu : 
+C1     Terrieur
+C2     Terrieur
+C4     Nanas
+
+Plusieurs façons de faire une jointure en SQL :
+
+Ancienne jointure (avant la norme SQL de 1992)
+
+SELECT DISTINCT c.idClient, nomClient
+FROM Clients c, Achats a
+WHERE a.idClient = a.idClient;
+
+
+Jointure depuis la norme SQL de 1992
+
+SELECT DISTINCT c.idClient, nomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient;
+
+Ce type de jointure produit une nouvelle table contenant les colonnes des deux tables jointes qui respectent la condition de jointure :
+
+A1	100		C1	C1	Terrieur	Alain	Montpellier
+A2	150		C1	C1	Terrieur	Alain	Montpellier
+A3	90		C1	C1	Terrieur	Alain	Montpellier
+A4	110		C2	C2 	Terrieur	Alex	Nimes
+A5	1000		C2	C2 	Terrieur	Alex	Nimes
+A6	600		C4	C4	Nanas		Judas	Montpellier
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Nimes
+		C3 	Bricot		Judas	Montpellier
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		C1
+		A4		110		C2
+		A5		1000		C2
+		A6		600		C4
+
+Jointure avec IN
+
+SELECT idClient, nomClient
+FROM Clients
+WHERE idClient IN (SELECT idClient
+			FROM Achats);
+
+Cette requête s’exécute en deux temps. La sous-requête est exécutée en premier de façon indépendante et retourne une liste de valeurs.
+	
+Puis la requête principale est exécutée en remplaçant la condition du WHERE par le résultat retourné par la sous-requête : 
+
+	
+SELECT idClient, nomClient
+FROM Clients
+WHERE idClient IN ('C1', ‘C1’, ‘C1’, ‘C2’,  'C2', 'C4') ;	
+
+qui est équivalent de
+
+SELECT idClient, nomClient
+FROM Clients
+WHERE idClient = 'C1’ OR idClient = ‘C2’ OR idClient = ‘C4’ ;
+
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Nimes
+		C3 	Bricot		Judas	Montpellier
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		C1
+		A4		110		C2
+		A5		1000		C2
+		A6		600		C4
+
+
+Jointure avec EXISTS	
+
+L'opérateur EXISTS consiste à vérifier si une sous-requête retourne un résultat ou non. Si la sous-requête contient des lignes, la réponse est TRUE, sinon la réponse est FALSE.
+Avec l’opérateur EXISTS, on affiche les clients dont la sous-requête retourne TRUE.
+
+SELECT idClient, nomClient
+FROM Clients c
+WHERE EXISTS 
+	(SELECT *
+	FROM Achats a
+	WHERE a.idClient = c.idClient);
+	
+Contrairement au IN, la sous-requête est corrélée à la requête principale via la condition de jointure dans le WHERE de la sous-requête. La sous-requête est exécutée pour chaque ligne de la requête principale.
+
+C1	Terrieur	
+		TRUE
+C2	Terrieur	
+		TRUE
+C3 	Bricot	
+		FALSE
+C4	Nanas		
+		TRUE
+
+Quand faut-il utiliser une requête imbriquée ?
+
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Nimes
+		C3 	Bricot		Judas	Montpellier
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		C1
+		A4		110		C2
+		A5		1000		C2
+		A6		600		C4
+
+Afficher le nom des clients qui ont effectué des achats?
+Résultat attendu : 
+    Terrieur
+    Terrieur
+    Nanas
+
+La requête suivante ne fonctionne pas car deux clients ont le même nom :
+
+SELECT DISTINCT nomClient
+FROM Clients c
+JOIN Achats a ON a.idClient = a.idClient;
+
+A1	100		C1	C1	Terrieur	Alain	Montpellier
+A2	150		C1	C1	Terrieur	Alain	Montpellier
+A3	90		C1	C1	Terrieur	Alain	Montpellier
+A4	110		C2	C2 	Terrieur	Alex	Nimes
+A5	1000		C2	C2 	Terrieur	Alex	Nimes
+A6	600		C4	C4	Nanas		Judas	Montpellier
+
+Il faut donc utiliser une requête imbriquée :
+
+SELECT nomClient
+FROM Clients
+WHERE idClient IN (SELECT idClient
+			FROM Achats);
+
+
+
+
+Attention à l'utilisation du DISTINCT :
+On remarque dans la requête précédente que l'utilisation du DISTINCT donne un mauvais résultat car il est utilisé sur un attribut (ici le nom du client) dont les valeurs ne sont pas uniques. L'ajout de la clé primaire idClient dans le SELECT permettrait d'éviter ce problème. Il ne faut donc pas utiliser l'opérateur DISTINCT si la clé primaire n'est pas présente dans le SELECT. Mais si on ne souhaite pas afficher la clé primaire, la seule solution est d'utiliser la requête imbriquée pour réaliser la jointure.
+ 
+Il est à noter que l'utilisation du DISTINCT n'est pas systématique quand la clé primaire est présente dans le SELECT. Cela dépend de la relation entre les deux tables.
+Dans notre exemple, un client peut réaliser plusieurs achats (relation un - plusieurs) mais un achat est réalisé par un seul client (plusieurs - un).
+ 
+Relation un - plusieurs : ici il faut mettre un DISTINCT car dans la table produit par la jointure le client est dupliqué pour chaque achat effectué. Il y a donc des doublons sur les clients.
+SELECT DISTINCT c.idClient, nomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient;
+ 
+Relation plusieurs - un : le DISTINCT est inutile car dans la table produit par la jointure un achat n'apparait qu'une seule fois. Il n'y a donc pas de doublons sur les achats.
+SELECT c.idAchat, montantAchat
+FROM Achats a
+JOIN Clients c ON c.idClient = a.idClient;
+ 
+
+
+
+
+
+
+JOINTURE EXTERNE
+
+On souhaite afficher tous les clients de la table CLIENTS ainsi que la liste des achats qu’ils ont effectués. Le JOIN n’affiche que les clients qui ont effectué des achats alors que le OUTER JOIN affiche tous les clients même ceux qui n’ont pas fait d’achats.
+Jointure externe = Jointure + Anti-Jointure
+
+SELECT * 
+FROM Clients c 
+LEFT OUTER JOIN Achats a ON c.idClient = a.idClient;
+
+C1	Terrieur	Alain 	Montpellier		A1		100		C1
+C1	Terrieur	Alain 	Montpellier		A2		150		C1
+C1	Terrieur	Alain 	Montpellier		A3		90		C1
+C2	Terrieur	Alex	Nimes			A4		110		C3
+C2 	Terrieur	Alex	Nimes			A5		1000		C3
+C3 	Bricot		Judas	Montpellier		NULL		NULL		NULL
+C4	Nanas		Judas	Montpellier		A6		600		C4
+
+
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Nimes
+		C3 	Bricot		Judas	Montpellier
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		C1
+		A4		110		C2
+		A5		1000		C2
+		A6		600		C4
+
+
+PRODUIT CARTESIEN
+
+SELECT * 
+FROM Clients, Achats;
+
+SELECT * 
+FROM Clients 
+CROSS JOIN Achats;	
+
+C1	Terrieur	Alain 	Montpellier		A1		100		C1
+C1	Terrieur	Alain 	Montpellier		A2		150		C1
+C1	Terrieur	Alain 	Montpellier		A3		90		C1	
+C1	Terrieur	Alain 	Montpellier		A4		110		C3
+C1	Terrieur	Alain 	Montpellier		A5		1000		C3
+C1	Terrieur	Alain 	Montpellier		A6		600		C4
+
+C2	Terrieur	Alex 	Nimes			A1		100		C1
+C2	Terrieur	Alex 	Nimes			A2		150		C1
+C2	Terrieur	Alex 	Nimes			A3		90		C1	
+C2	Terrieur	Alex 	Nimes			A4		110		C3
+C2	Terrieur	Alex 	Nimes			A5		1000		C3
+C2	Terrieur	Alex 	Nimes			A6		600		C4
+
+C3 	Bricot		Judas	Montpellier		A1		100		C1
+C3 	Bricot		Judas	Montpellier		A2		150		C1
+C3 	Bricot		Judas	Montpellier		A3		90		C1	
+C3 	Bricot		Judas	Montpellier		A4		110		C3
+C3 	Bricot		Judas	Montpellier		A5		1000		C3
+C3 	Bricot		Judas	Montpellier		A6		600		C4
+
+C4	Nanas		Judas	Montpellier		A1		100		C1
+C4	Nanas		Judas	Montpellier		A2		150		C1
+C4	Nanas		Judas	Montpellier		A3		90		C1	
+C4	Nanas		Judas	Montpellier		A4		110		C3
+C4	Nanas		Judas	Montpellier		A5		1000		C3
+C4	Nanas		Judas	Montpellier		A6		600		C4
+
+

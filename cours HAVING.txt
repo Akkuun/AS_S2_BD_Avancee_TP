@@ -1,0 +1,173 @@
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Montpellier
+		C3 	Bricot		Judas	Nimes
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		C1
+		A4		110		C3
+		A5		1000		C3
+		A6		340		C4
+
+
+GROUP BY : le regroupement est utilisé pour appliquer une fonction d’agrégation à chaque groupe.
+
+Que fait cette requête?
+SELECT idClient, COUNT(*)
+FROM Achats;
+
+Sur Oracle une erreur de compilation. Sur d'autres SGBD, des réponses variées comme par exemple
+C1   6
+C3   6
+C4   6 
+
+On veut afficher l’idClient ainsi que le nombre d'achats faits par chaque client
+
+SELECT idClient, COUNT(*)
+FROM Achats
+GROUP BY idClient;
+
+A1		100		C1
+A2		150		C1
+A3		90		C1
+A4		110		C3
+A5		1000	            C3
+A6		600		C4
+
+Résultat obtenu : 
+C1  3
+C3  2
+C4  1
+
+
+
+On veut afficher idClient, prenomClient ainsi que le nombre d'achats faits par chaque client
+
+
+
+SELECT c.idClient, prenomClient, COUNT(*)
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY c.idClient, prenomClient;
+
+C1 Alain 3
+C3 Judas 2
+C4 Judas 1
+
+
+Tous les attributs du SELECT (hormis la fonction) sont dans le GROUP BY.
+
+On veut afficher le idClient, prenomClient ainsi que le montant total des achats faits par chaque client
+
+
+
+SELECT c.idClient, prenomClient, SUM(montantAchat)
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY c.idClient, prenomClient;
+
+C1 Alain 340
+C3 Judas 1110
+C4 Judas 340
+
+
+
+Tous les attributs du SELECT sont dans le GROUP BY mais la réciproque n'est pas vrai
+
+On veut afficher le prénomClient ainsi que le nombre d'achats faits par chaque client
+
+
+SELECT prenomClient, COUNT(*)
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY prenomClient;
+
+Alain 3
+Judas 3
+
+
+La réponse est fausse car il y a deux clients qui s’appellent Judas.
+Il faut donc rajouter idClient dans le GROUP BY pour les différencier
+
+
+SELECT prenomClient, COUNT(*)
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY c.idClient, prenomClient;
+
+Alain   3
+Judas  2
+Judas  1
+
+
+
+
+
+
+
+
+
+
+
+A1	100		C1	C1	Terrieur	Alain	Montpellier
+A2	150		C1	C1	Terrieur	Alain	Montpellier
+A3	90		C1	C1	Terrieur	Alain	Montpellier
+A4	110		C3	C3 	Bricot		Judas	Nimes
+A5	1000	     	C3	C3 	Bricot		Judas	Nimes
+A6	600		C4	C4	Nanas		Judas	Montpellier
+
+Attention, on n’obtient pas le même résultat avec IN, il faut faire un JOIN
+
+
+SELECT prenomClient, COUNT(*)
+FROM Clients 
+WHERE idClient IN (SELECT idClient
+	                     FROM Achats)
+GROUP BY idClient, prenomClient;
+
+Alain 1
+Judas 1
+Judas 1
+
+
+
+Ne pas utiliser un GROUP BY sans fonction d’agrégation car ceci est équivalent à un DISTINCT 
+
+Ces deux requêtes sont équivalentes
+
+
+SELECT c.idClient, prenomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY c.idClient, prenomClient;
+
+SELECT DISTINCT c.idClient, prenomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient;
+
+
+
+
+HAVING : permet de sélectionner des groupes
+
+On veut afficher le prénom des clients ayant fait plus de 2 achats
+
+SELECT prenomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY c.idClient, prenomClient
+HAVING COUNT(*) > 2;
+
+On veut afficher le prénom des clients ayant effectué le même total d’achats que le client C4
+
+SELECT prenomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient
+GROUP BY c.idClient, prenomClient
+HAVING SUM(montant) = (SELECT SUM(montant)
+                                           FROM Achats
+                                           WHERE idClient = ‘C4’);
+

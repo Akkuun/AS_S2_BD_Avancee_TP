@@ -1,0 +1,383 @@
+Blocs PL/SQL :
+
+— commande pour activer le paquetage DBMS_OUPUT
+SET SERVEROUTPUT ON;
+
+
+BEGIN
+      DBMS_OUTPUT.PUT_LINE('Bonjour ');
+END;
+
+
+— déclaration de variables simples
+DECLARE
+  v_nom VARCHAR(25);
+BEGIN
+      v_nom := 'Palleja';
+	DBMS_OUTPUT.PUT_LINE('Bonjour ' || v_nom);
+END;
+
+
+— variables de substitution
+
+
+— commande pour désactiver la vérification des variables de substitution
+SET VERIFY OFF;
+
+
+ACCEPT s_nom PROMPT 'Saisir le nom';
+
+
+DECLARE
+  v_nom VARCHAR(25);
+BEGIN
+      v_nom := '&s_nom';
+	DBMS_OUTPUT.PUT_LINE('Bonjour ' || v_nom);
+END;
+
+
+—- intégrer du code SQL dans un bloc PL/SQL 
+ACCEPT s_idCamping PROMPT 'Saisir l''id du camping';
+DECLARE
+      v_nbEmployes NUMBER;
+BEGIN
+	SELECT COUNT(*) INTO v_nbEmployes 
+	FROM Employes
+	WHERE idCamping = '&s_idCamping';
+	DBMS_OUTPUT.PUT_LINE('Il y a ' || v_nbEmployes || ' employés dans le camping &s_idCamping');
+END;
+
+
+—- types composites (structurés)
+
+ACCEPT s_idCamping PROMPT 'Saisir l''id du camping';
+DECLARE
+      v_nomCamping Campings.nomCamping%TYPE;
+      v_villeCamping Campings.villeCamping%TYPE;
+BEGIN
+	SELECT nomCamping, villeCamping INTO v_nomCamping, v_villeCamping 
+	FROM CAMPINGS
+	WHERE idCamping = '&s_idCamping';
+	
+      DBMS_OUTPUT.PUT_LINE('Nom du camping &s_idCamping : ' ||         v_nomCamping);
+      DBMS_OUTPUT.PUT_LINE('Ville du camping &s_idCamping : ' ||         v_villeCamping);
+END;
+
+
+ACCEPT s_idCamping PROMPT 'Saisir l''id du camping';
+DECLARE
+      rty_Camping Campings%ROWTYPE;
+BEGIN
+      SELECT * INTO rty_camping
+      FROM Campings
+      WHERE idCamping = '&s_idCamping';
+
+      DBMS_OUTPUT.PUT_LINE('Nom du camping &s_idCamping : ' || rty_Camping.nomCamping);
+	DBMS_OUTPUT.PUT_LINE('Ville du camping &s_idCamping : ' || rty_Camping.villeCamping);
+	DBMS_OUTPUT.PUT_LINE('Nombre étoiles du camping &s_idCamping : ' || rty_Camping.nbEtoilesCamping);
+END;
+
+
+
+
+
+
+
+—- EXCEPTIONS
+
+SET SERVEROUTPUT ON;
+ACCEPT s_idCamping PROMPT 'Saisir l''id du camping';
+DECLARE
+      v_nomCamping Campings.nomCamping%TYPE;
+BEGIN
+	SELECT nomCamping INTO v_nomCamping 
+	FROM CAMPINGS
+	WHERE idCamping = '&s_idCamping';
+	DBMS_OUTPUT.PUT_LINE('Nom du camping &s_idCamping : ' || v_nomCamping);
+
+EXCEPTION
+ 	WHEN NO_DATA_FOUND THEN
+		DBMS_OUTPUT.PUT_LINE('Le camping &s_idCamping n''existe pas');
+END;
+
+
+
+ACCEPT s_idCamping PROMPT 'Saisir l''id du camping';
+DECLARE
+      v_nbEmployes NUMBER;
+      v_idCamping Campings.idCamping%TYPE;
+BEGIN
+      SELECT idCamping INTO v_idCamping
+	FROM Campings
+	WHERE idCamping = '&s_idCamping';
+       
+	SELECT COUNT(*) INTO v_nbEmployes 
+	FROM Employes
+	WHERE idCamping = '&s_idCamping';
+	DBMS_OUTPUT.PUT_LINE('Il y a ' || v_nbEmployes || ' employés dans le camping &s_idCamping');
+
+EXCEPTION
+ 	WHEN NO_DATA_FOUND THEN
+		DBMS_OUTPUT.PUT_LINE('Le camping &s_idCamping n''existe pas');
+END;
+
+
+—- structure conditionnelle IF
+
+ACCEPT s_idCamping PROMPT 'Saisir l''id du camping';
+DECLARE
+      v_nbEmployes NUMBER;
+      v_nbCamping NUMBER;
+BEGIN
+      SELECT COUNT(*) INTO v_nbCamping
+	FROM Campings
+	WHERE idCamping = '&s_idCamping';
+
+      IF v_nbCamping > 0
+THEN
+	SELECT COUNT(*) INTO v_nbEmployes 
+	FROM Employes
+	WHERE idCamping = '&s_idCamping';
+	DBMS_OUTPUT.PUT_LINE('Il y a ' || v_nbEmployes || ' employés dans le camping &s_idCamping');
+ELSE
+DBMS_OUTPUT.PUT_LINE('Le camping &s_idCamping n''existe pas');
+END IF;
+END;
+
+
+
+
+
+
+FONCTIONS ET PROCÉDURES STOCKÉES :
+
+CREATE OR REPLACE FUNCTION nbEmployesCamping(p_idCamping Campings.idCamping%TYPE) RETURN NUMBER IS
+      v_nbEmployes NUMBER;
+      v_nbCamping NUMBER;
+BEGIN
+      SELECT COUNT(*) INTO v_nbCamping
+	FROM Campings
+	WHERE idCamping = p_idCamping;
+
+      IF v_nbCamping > 0
+THEN
+	SELECT COUNT(*) INTO v_nbEmployes 
+	FROM Employes
+	WHERE idCamping = p_idCamping;
+	RETURN v_nbEmployes;
+ELSE
+RETURN NULL;
+END IF;
+
+END;
+/
+SHOW ERRORS;
+
+-- permet de voir la liste des procédures et fonctions créées
+SELECT *
+FROM user_objects;
+
+
+-- permet de voir le code des fonctions et procédures
+SELECT *
+FROM user_source;
+
+
+-- pour tester les fonctions sous isqlplus
+SELECT nbEmployesCamping('CAMP1')
+FROM Dual;
+
+
+SELECT nbEmployesCamping(idCamping)
+FROM Campings;
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE affichageNbEmployes(p_idCamping Campings.idCamping%TYPE) IS
+v_nbEmployes NUMBER;
+BEGIN
+	v_nbEmployes := nbEmployesCamping(p_idCamping);
+	IF v_nbEmployes IS NOT NULL
+	THEN
+		DBMS_OUTPUT.PUT_LINE('Il y a ' || v_nbEmployes || ' employés dans le camping ' || p_idCamping);
+	ELSE
+		DBMS_OUTPUT.PUT_LINE('Le camping ' || p_idCamping || ' n''existe pas');
+	END IF;
+END;
+/
+
+-- pour lancer la procédure sous isqlplus
+CALL affichageNbEmployes('CAMP1');
+
+
+CURSEURS :
+
+Avec un WHILE :
+
+DECLARE
+   CURSOR curs_employes IS SELECT nomEmploye, prenomEmploye, salaireEmploye
+                           FROM Employes
+                           WHERE idCamping = 'CAMP1'
+			         ORDER BY salaireEmploye;
+   v_ligne curs_employes%ROWTYPE;
+BEGIN
+   OPEN curs_employes;
+   FETCH curs_employes INTO v_ligne;
+   WHILE (curs_employes%FOUND) LOOP
+      DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' ||            v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+      FETCH curs_employes INTO v_ligne;
+   END LOOP;
+   CLOSE curs_employes;
+END;
+
+ 
+
+Avec un LOOP :
+
+DECLARE
+   CURSOR curs_employes IS SELECT nomEmploye, prenomEmploye, salaireEmploye
+                           FROM Employes
+                           WHERE idCamping = 'CAMP1'
+				   ORDER BY salaireEmploye;
+   v_ligne curs_employes%ROWTYPE;
+BEGIN
+   OPEN curs_employes;
+   LOOP
+		FETCH curs_employes INTO v_ligne;
+		EXIT WHEN curs_employes%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+   END LOOP;
+   CLOSE curs_employes;
+END;
+
+
+
+
+
+Avec un FOR :
+
+DECLARE
+   CURSOR curs_employes IS SELECT nomEmploye, prenomEmploye, salaireEmploye
+                           FROM Employes
+                           WHERE idCamping = 'CAMP1'
+				   ORDER BY salaireEmploye;
+BEGIN
+   FOR v_ligne IN curs_employes LOOP
+	 DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+   END LOOP;
+END; 
+
+ou encore
+BEGIN
+   FOR v_ligne IN (SELECT nomEmploye, prenomEmploye, salaireEmploye
+                   FROM Employes
+                   WHERE idCamping = 'CAMP1'
+			 ORDER BY salaireEmploye) LOOP
+       DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+   END LOOP;
+END;
+
+
+
+Curseur paramétré :
+
+DECLARE
+   CURSOR curs_employes (v_idCamping Campings.idCamping%TYPE) IS SELECT nomEmploye, prenomEmploye, salaireEmploye
+                           FROM Employes
+                           WHERE idCamping = v_idCamping
+				   ORDER BY salaireEmploye;
+BEGIN
+   FOR v_ligne IN curs_employes('CAMP1') LOOP
+	 DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+   END LOOP;
+   
+    FOR v_ligne IN curs_employes('CAMP2') LOOP
+	 DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+   END LOOP;
+END; 
+
+
+DECLARE
+   CURSOR curs_employes (v_idCamping Campings.idCamping%TYPE) IS SELECT nomEmploye, prenomEmploye, salaireEmploye
+                           FROM Employes
+                           WHERE idCamping = v_idCamping
+				   ORDER BY salaireEmploye;
+   v_ligne curs_employes%ROWTYPE;
+BEGIN
+   OPEN curs_employes('CAMP1');
+   FETCH curs_employes INTO v_ligne;
+   WHILE (curs_employes%FOUND) LOOP
+      DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+      FETCH curs_employes INTO v_ligne;
+   END LOOP;
+   CLOSE curs_employes;
+   
+   OPEN curs_employes('CAMP2');
+   FETCH curs_employes INTO v_ligne;
+   WHILE (curs_employes%FOUND) LOOP
+      DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+      FETCH curs_employes INTO v_ligne;
+   END LOOP;
+   CLOSE curs_employes;
+END;
+
+
+DECLARE
+	CURSOR curs_campings IS SELECT idCamping, nomCamping
+                           FROM Campings
+                           ORDER BY nomCamping;
+      CURSOR curs_employes (v_idCamping Campings.idCamping%TYPE) IS SELECT nomEmploye, prenomEmploye, salaireEmploye
+                           FROM Employes
+                           WHERE idCamping = v_idCamping
+				   ORDER BY salaireEmploye;
+BEGIN
+	FOR v_camping IN curs_campings LOOP
+		DBMS_OUTPUT.PUT_LINE(v_camping.nomCamping);
+		FOR v_employe IN curs_employes(v_camping.idCamping) LOOP
+			DBMS_OUTPUT.PUT_LINE(v_employe.nomEmploye || ' ' || v_employe.prenomEmploye || ' ' || v_employe.salaireEmploye);
+		END LOOP;
+	END LOOP;
+END; 
+
+
+OU
+
+BEGIN
+	FOR v_camping IN (SELECT idCamping, nomCamping
+                      FROM Campings
+                      ORDER BY nomCamping) LOOP
+		DBMS_OUTPUT.PUT_LINE(v_camping.nomCamping);
+		FOR v_employe IN (SELECT nomEmploye, prenomEmploye, salaireEmploye
+                          FROM Employes
+                          WHERE idCamping = v_Camping.idCamping
+				  ORDER BY salaireEmploye) LOOP
+			DBMS_OUTPUT.PUT_LINE(v_employe.nomEmploye || ' ' || v_employe.prenomEmploye || ' ' || v_employe.salaireEmploye);
+		END LOOP;
+	END LOOP;
+END; 
+
+
+
+
+CURSEURS ET PROCEDURE :
+
+CREATE OR REPLACE PROCEDURE affichageEmployesCamping(p_idCamping IN  Campings.idCamping%TYPE) IS
+BEGIN
+   FOR v_ligne IN (SELECT nomEmploye, prenomEmploye, salaireEmploye
+                   FROM Employes
+                   WHERE idCamping = p_idCamping
+		       ORDER BY salaireEmploye) LOOP
+       DBMS_OUTPUT.PUT_LINE(v_ligne.nomEmploye || ' ' || v_ligne.prenomEmploye || ' ' || v_ligne.salaireEmploye);
+   END LOOP;
+END;
+/
+CALL affichageEmployesCamping('CAMP1');
+
+
+
+
+

@@ -1,0 +1,181 @@
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Montpellier
+		C3 	Bricot		Judas	Nimes
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90		NULL
+		A4		110		C3
+		A5		1000		C3
+		A6		600		C4
+
+On veut afficher le nom des clients qui n’ont pas effectué d’achat, c’est à dire les clients de la table CLIENTS qui ne se trouve pas dans la table ACHATS. C’est donc l’inverse de la jointure qu’on appelle anti-jointure.
+Le résultat attendu ici est : TERRIEUR
+
+Trois opérateurs pour l’anti-jointure.
+
+ANTI-JOINTURES 
+
+MINUS 
+Attention : ne pas appliquer un MINUS sur des attributs pouvant contenir des  homonymes
+
+
+
+SELECT nomClient
+FROM Clients
+MINUS
+SELECT nomClient
+FROM Clients c
+JOIN Achats a ON c.idClient = a.idClient;
+
+
+
+Terrieur
+Terrieur
+Bricot 
+Nanas
+MINUS
+Terrieur
+Terrieur
+Bricot
+Bricot 
+Nanas
+
+
+Cette requête ne retourne pas le bon résultat. Elle ne retourne aucun client alors qu’on attend le Client Terrieur (C2) car on applique le MINUS sur le nomClient. Or il existe deux clients qui s’appellent Terrieur, le client C1 qui a effectué des achats et le client C2 qui n’a effectué aucun achat.
+
+Pour obtenir le bon résultat, il faut appliquer le MINUS sur idClient
+
+
+
+SELECT nomClient
+FROM Clients
+WHERE idClient IN 
+(SELECT idClient
+FROM Clients 
+MINUS
+SELECT idClient
+FROM Achats);
+
+
+
+C1		
+C2		
+C3 		
+C4			
+MINUS
+C1	
+C1				
+C3 	
+C3 		
+C4
+
+	
+
+Ici la sous-requête retourne bien le client C2 puis la requête principale le nom du client qui a pour numéro C2.
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Montpellier
+		C3 	Bricot		Judas	Nimes
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90	            NULL
+		A4		110		C3
+		A5		1000		C3
+		A6		600		C4
+
+
+NOT IN : 
+ne retourne rien si la sous-requête contient des valeurs NULL
+
+SELECT idClient, nomClient
+FROM Clients
+WHERE idClient NOT IN (SELECT idClient
+			       FROM Achats);
+
+Ici, il y a des achats sans client. La sous-requête va retourner le résultat suivant :
+C1
+C1
+NULL
+C3
+C3
+C4
+
+Comme pour le IN, la condition du WHERE est remplacée par le résultat de la sous-requête de la façon suivante.
+
+SELECT idClient, nomClient
+FROM Clients
+WHERE idClient != 'C1' AND idClient != 'C3' AND idClient != 'C4' AND idClient != NULL ;
+
+Le problème est la condition idClient != NULL qui retourne toujours faux car pour tester si un attribut n’a pas une valeur NULL, il faut écrire idClient IS NOT NULL au lieu de !=
+
+Pour contourner le problème, il faut éliminer les valeurs NULL dans la sous-requête
+SELECT idClient, nomClient
+FROM Clients
+WHERE idClient NOT IN (SELECT idClient
+			       FROM Achats
+       WHERE idClient IS NOT NULL);
+CLIENTS (idClient, nomClient, prenomClient, villeClient)
+		C1	Terrieur	Alain 	Montpellier
+		C2	Terrieur	Alex	Montpellier
+		C3 	Bricot		Judas	Nimes
+		C4	Nanas		Judas	Montpellier
+
+ACHATS (idAchat, montantAchat, idClient#)
+		A1		100		C1
+		A2		150		C1
+		A3		90	            NULL
+		A4		110		C3
+		A5		1000		C3
+		A6		600		C4
+
+
+NOT EXISTS 
+
+Le NOT EXISTS fonctionne comme le EXISTS c’est à dire que la sous-requête est exécutée pour chaque ligne de la requête principale. Mais contrairement à l’EXISTS, ici on retourne les clients dont la sous-requête ne retourne pas de lignes c’est à dire les clients dont la sous-requête retourne TRUE (car ici EXISTS retourne FALSE, donc NOT EXISTS retourne TRUE).
+
+
+SELECT nomClient
+FROM Clients c
+WHERE NOT EXISTS 
+	(SELECT *
+	FROM Achats a
+	WHERE a.idClient = c.idClient);
+
+
+C1	Terrieur	
+		FALSE
+C2	Terrieur	
+		TRUE
+C3 	Bricot	
+		FALSE
+C4	Nanas		
+		FALSE
+
+
+
+Quels sont les achats qui n’ont pas été faits par un client ?
+
+On peut faire une anti-jointure avec MINUS, NOT IN et NOT EXISTS
+
+SELECT idAchat
+FROM Achats a
+WHERE NOT EXISTS 
+	(SELECT *
+	FROM Clients c
+	WHERE a.idClient = c.idClient);
+
+
+Mais ici inutile car idClient est dans la table Achats, donc il suffit de tester si idClient a une valeur NULL :
+
+SELECT idAchat
+FROM Achats
+WHERE idClient IS NULL;
+
+
