@@ -1,0 +1,54 @@
+8 )   Write a query to get the lastname, firstname and salary of the three employees having the
+    largest salaries
+
+
+SELECT first_name,last_name,salary from employees
+group by employee_id
+order by salary DESC LIMIT 3
+
+
+9 ) Write a query to return the number of employees as employeeCount
+
+select count(employee_id)as employee_count from employees
+
+10 )Write a query to display the manager ids, without duplicates
+
+
+select MANAGER_ID from employees
+
+11 )
+Write a query that displays the number of unique managers as managerCount
+SELECT count(DISTINCT MANAGER_ID) from employees
+
+12 )
+Write a query to get the number of employees having a salary strictly greater than 10000, using
+    the riches alias
+SELECT count(EMPLOYEE_ID) as riches from employees where SALARY>10000
+
+13 )
+
+Write a query to get the number of departments where some employees have a commission
+    percentage
+
+select count( DISTINCT DEPARTMENT_ID) from employees  where COMMISSION_PCT >0
+
+14 )
+ Write a query to get the average salary within the company
+select AVG(SALARY) from employees;
+
+15 ) Write a query to get the average and standard deviation of salary from employees of the
+    department 80
+
+select AVG(SALARY),STD(SALARY) from employees where DEPARTMENT_ID =80;
+
+16 )
+ Write a query to get the total bonuses (salary times commission) earnt by the employees of
+    department 80, as well as the minimum and maximum. Also return the number of employees in
+    this department.
+
+    select sum(SALARY*COMMISSION_PCT), min(SALARY *COMMISSION_PCT),max(SALARY *COMMISSION_PCT),count(EMPLOYEE_ID)  FROM employees where DEPARTMENT_ID=80
+
+17 )
+    Write a query that displays the five first characters of the five first employees’ last names by
+    alphabetical order
+
