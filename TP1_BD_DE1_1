@@ -52,3 +52,39 @@ select AVG(SALARY),STD(SALARY) from employees where DEPARTMENT_ID =80;
     Write a query that displays the five first characters of the five first employees’ last names by
     alphabetical order
 
+select mid(LAST_NAME,1,5) as nb from employees LIMIT 5
+
+18)
+Your new french employee speaks a very poor english. He is looking for an employee whom he
+calls « Brousse », but nobody matches this first name in the database. Using the soundex
+function, find this employee and display the information about him.
+
+select * from employees where FIRST_NAME sounds like 'Brusse'
+
+19 )
+
+Write a query to display the information about the employee who has the longest last name
+
+select * from employees where CHAR_LENGTH(LAST_NAME) = (select max(char_length(LAST_NAME)) from employees)
+
+20 ) Write a query to display in a single column called fullname the first and last names of the three
+first employees. The last name must be in upper case
+
+select CONCAT_WS(' ',FIRST_NAME,upper(LAST_NAME)) from employees limit 3
+
+21 )
+Write a query to display how long the employees have been working for the company, in days
+
+
+select FIRST_NAME,now(),HIRE_DATE,datediff(now(),HIRE_DATE) from employees
+
+22)
+
+Write a query to extract the month from the current date
+
+select month(now())
+
+23 )
+Write a query to get the first name and hire date from employees table where hire date between
+    '1987-06-01' and '1987-07-30'
+
