@@ -88,3 +88,42 @@ select month(now())
 Write a query to get the first name and hire date from employees table where hire date between
     '1987-06-01' and '1987-07-30'
 
+
+select * from employees where HIRE_DATE BETWEEN '1987-06-01' and  '1987-07-30'
+
+
+24)
+    Write a query to get the firstname, lastname of employees who joined in 1987.
+
+select FIRST_NAME,LAST_NAME from employees where YEAR(HIRE_DATE)=1987;
+
+
+25 )
+
+Write a query to get the first name, last name of people who joined the company one Monday.
+
+    select FIRST_NAME from employees where dayname(HIRE_DATE) ='Monday';
+
+26 )
+Write a query to display the first day of the month (in datetime format) three months before
+the current month.
+
+
+27)
+
+
+Definir un modèle de BD
+
+Une equipe joue contre les autre dans des match, chaque pair d'equipe' peuvent jouer à plusieurs entre elles en même temps
+un joueur appartient à une equipe
+a match est compose d'action' , de touchdown de perdan , de gagnat
+une action est compose de passe d'un joueur à un autre ou d'une run réalisé par un joueur
+
+voir ModeleBDGames.png
+
+
+
+
+
+
+
