@@ -55,12 +55,14 @@ where not exists (
 
 R33 // tous ==antijointure
 
-select nomcamping from campings where not exists( // ceux qui ont pas un salaire <1000
-        select * from employes where employes.idcamping=campings.idcamping and salaireemploye<1000
+    select nomcamping from campings where not exists(
 
-    ) and idcamping in (select idcamping from employes) // parmis tous les employes
+        // ceux qui ont pas un salaire <1000
+            select * from employes where employes.idcamping=campings.idcamping and salaireemploye<1000
 
-R34
+        ) and idcamping in (select idcamping from employes) // parmis tous les employes
+
+    R34
 
 SELECT nomClient
 FROM Clients
